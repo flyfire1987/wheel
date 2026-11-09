@@ -1,0 +1,192 @@
+{
+  "version": 1,
+  "active_config_id": "food",
+  "configs": [
+    {
+      "id": "food",
+      "name": "餐饮",
+      "emoji": "🍜",
+      "items": [
+        {
+          "id": "f4",
+          "text": "海鲜",
+          "weight": 1,
+          "used": false
+        },
+        {
+          "id": "f5",
+          "text": "寿司",
+          "weight": 1,
+          "used": false
+        },
+        {
+          "id": "f6",
+          "text": "肯德基",
+          "weight": 1,
+          "used": false
+        },
+        {
+          "id": "f8",
+          "text": "泡面",
+          "weight": 1,
+          "used": false
+        },
+        {
+          "id": "f10",
+          "text": "鸡翅包饭",
+          "weight": 1,
+          "used": false
+        },
+        {
+          "id": "f12",
+          "text": "再来一次",
+          "weight": 1,
+          "used": false
+        },
+        {
+          "id": "i008e94d9",
+          "text": "章鱼小丸子",
+          "weight": 1,
+          "used": false
+        },
+        {
+          "id": "i04630312",
+          "text": "谷田稻香",
+          "weight": 1,
+          "used": false
+        },
+        {
+          "id": "ic1da2608",
+          "text": "冰淇淋",
+          "weight": 1,
+          "used": false
+        },
+        {
+          "id": "i78633b3b",
+          "text": "小馄饨",
+          "weight": 1,
+          "used": false
+        },
+        {
+          "id": "i4ea17e18",
+          "text": "奥尔良烤鸡",
+          "weight": 1,
+          "used": false
+        },
+        {
+          "id": "ib54da965",
+          "text": "筒子骨汤",
+          "weight": 1,
+          "used": false
+        }
+      ]
+    },
+    {
+      "id": "game",
+      "name": "游戏",
+      "emoji": "🎮",
+      "items": [
+        {
+          "id": "g1",
+          "text": "五子棋",
+          "weight": 1,
+          "used": false
+        },
+        {
+          "id": "g2",
+          "text": "UNO",
+          "weight": 1,
+          "used": true
+        },
+        {
+          "id": "g10",
+          "text": "麻将",
+          "weight": 1,
+          "used": true
+        },
+        {
+          "id": "ieeec245b",
+          "text": "斗地主",
+          "weight": 1,
+          "used": false
+        },
+        {
+          "id": "ie6ee73aa",
+          "text": "蛋仔派对",
+          "weight": 1,
+          "used": true
+        },
+        {
+          "id": "i022b9f36",
+          "text": "布鲁伊",
+          "weight": 1,
+          "used": false
+        },
+        {
+          "id": "i954b1dc8",
+          "text": "翻翻乐",
+          "weight": 1,
+          "used": true
+        },
+        {
+          "id": "ia7b99534",
+          "text": "再来一次",
+          "weight": 1,
+          "used": false
+        }
+      ]
+    },
+    {
+      "id": "c6a1a8db5",
+      "name": "运动",
+      "emoji": "🎯",
+      "items": [
+        {
+          "id": "ib94a45ee",
+          "text": "跑步",
+          "weight": 1,
+          "used": false
+        },
+        {
+          "id": "id70cd0ea",
+          "text": "跳绳",
+          "weight": 1,
+          "used": false
+        },
+        {
+          "id": "iddd6e31d",
+          "text": "羽毛球",
+          "weight": 1,
+          "used": false
+        },
+        {
+          "id": "i2d84ad10",
+          "text": "足球",
+          "weight": 1,
+          "used": false
+        },
+        {
+          "id": "i379f9596",
+          "text": "跳操",
+          "weight": 1,
+          "used": false
+        },
+        {
+          "id": "i565eed94",
+          "text": "再来一次",
+          "weight": 1,
+          "used": false
+        }
+      ]
+    }
+  ],
+  "history": [
+    {
+      "id": "hd6a34662",
+      "config_id": "food",
+      "config_name": "餐饮",
+      "text": "泡面",
+      "ts": 1792489152
+    }
+  ]
+}

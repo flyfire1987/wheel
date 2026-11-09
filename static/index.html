@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>🎡 大转盘</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--primary:#e11d48;--primary-2:#f97316;--bg:#f8fafc;--card:#fff;--text:#1e293b;--muted:#94a3b8;--border:#e2e8f0;--radius:14px}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:linear-gradient(160deg,#fff1f2 0%,#fff7ed 100%);color:var(--text);padding-bottom:40px;overflow-x:hidden}
+.wrap{max-width:520px;margin:0 auto;padding:14px 12px 30px}
+header{text-align:center;margin-bottom:14px}
+header h1{font-size:21px;font-weight:700}
+header .sub{font-size:12px;color:var(--muted);margin-top:4px}
+
+/* ── 配置切换 ── */
+.chips{display:flex;gap:7px;overflow-x:auto;padding:4px 2px 10px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;padding:9px 14px;border-radius:999px;border:2px solid var(--border);background:#fff;color:var(--text);font-size:14px;font-weight:600;cursor:pointer;transition:all .16s;min-height:40px}
+.chip.active{background:linear-gradient(135deg,var(--primary),var(--primary-2));border-color:transparent;color:#fff;box-shadow:0 3px 10px rgba(225,29,72,.3)}
+.chip.add{border-style:dashed;color:var(--muted)}
+.chip .dot{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.55}
+
+/* ── 转盘 ── */
+.wheel-box{position:relative;width:100%;aspect-ratio:1;max-width:400px;margin:0 auto}
+#wheel{width:100%;height:100%;display:block;filter:drop-shadow(0 6px 18px rgba(0,0,0,.12))}
+.pointer{position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:15px solid transparent;border-right:15px solid transparent;border-top:26px solid #ef4444;z-index:3;filter:drop-shadow(0 2px 4px rgba(0,0,0,.28))}
+.hub{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:27%;aspect-ratio:1;border-radius:50%;background:linear-gradient(145deg,#fff,#f1f5f9);border:5px solid var(--primary);box-shadow:0 5px 16px rgba(0,0,0,.24);color:var(--primary);font-size:17px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .12s,box-shadow .16s;z-index:4;font-family:inherit;padding:0;user-select:none}
+.hub:active{transform:translate(-50%,-50%) scale(.93)}
+.hub:disabled{background:linear-gradient(145deg,#e2e8f0,#cbd5e1);border-color:#94a3b8;color:#64748b;cursor:not-allowed}
+.hub:disabled:active{transform:translate(-50%,-50%)}
+
+/* ── 结果 ── */
+.result{margin:14px 0 6px;min-height:62px;display:flex;align-items:center;justify-content:center;padding:12px;border-radius:var(--radius);background:#fff;border:2px dashed var(--border);text-align:center;transition:all .2s}
+.result.win{border-style:solid;border-color:var(--primary);background:linear-gradient(135deg,#fff1f2,#fff7ed);box-shadow:0 4px 14px rgba(225,29,72,.16)}
+.result .label{font-size:12px;color:var(--muted)}
+.result .val{font-size:26px;font-weight:800;color:var(--primary);margin-top:3px;word-break:break-all}
+.result .val.empty{font-size:14px;color:var(--muted);font-weight:500}
+
+/* ── 工具条 ── */
+.tools{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;margin:10px 0 16px}
+.btn{padding:8px 13px;border-radius:9px;border:1.5px solid var(--border);background:#fff;color:var(--text);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit;min-height:38px;display:inline-flex;align-items:center;gap:5px}
+.btn:active{transform:scale(.95)}
+.btn.on{border-color:var(--primary);color:var(--primary);background:#fff1f2}
+.btn.warn{border-color:#f59e0b;color:#b45309;background:#fffbeb}
+
+/* ── 编辑卡片 ── */
+.card{background:var(--card);border-radius:var(--radius);padding:14px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.card h2{font-size:15px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.card .hint{font-size:11.5px;color:var(--muted);margin-bottom:11px;line-height:1.5}
+.cfg-edit{display:flex;gap:7px;margin-bottom:11px}
+.inp{flex:1;min-width:0;padding:9px 11px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:inherit;background:#fff;color:var(--text);outline:none}
+.inp:focus{border-color:var(--primary)}
+.inp.emoji{flex:0 0 52px;text-align:center;font-size:19px}
+.items{display:flex;flex-direction:column;gap:7px;margin-bottom:11px}
+.item{display:flex;align-items:center;gap:7px;padding:8px 10px;background:#f8fafc;border:1.5px solid var(--border);border-radius:10px;transition:all .15s}
+.item.used{opacity:.55;background:#f1f5f9}
+.item .nm{flex:1;min-width:0;font-size:14px;font-weight:600;word-break:break-all;cursor:text;border-radius:5px;padding:2px 4px}
+.item .nm:focus{background:#fff;outline:2px solid var(--primary);outline-offset:1px}
+.item .wt{flex:0 0 auto;display:flex;align-items:center;gap:3px;background:#fff;border:1.5px solid var(--border);border-radius:7px;padding:2px 5px}
+.item .wt button{border:0;background:none;font-size:15px;cursor:pointer;color:var(--primary);padding:0 2px;line-height:1;font-family:inherit}
+.item .wt span{font-size:12px;font-weight:700;min-width:12px;text-align:center}
+.icon-btn{flex:0 0 30px;width:30px;height:30px;border-radius:8px;border:1.5px solid var(--border);background:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .15s;padding:0}
+.icon-btn:active{transform:scale(.9)}
+.icon-btn.del{border-color:#fecaca;color:#dc2626}
+.icon-btn.done{border-color:var(--primary);color:var(--primary)}
+.icon-btn.done.on{background:var(--primary);color:#fff}
+.empty-tip{text-align:center;padding:22px 10px;color:var(--muted);font-size:13px}
+
+/* 历史 */
+.hist{display:flex;flex-direction:column;gap:5px;max-height:220px;overflow-y:auto}
+.hist-row{display:flex;align-items:center;gap:8px;padding:7px 10px;background:#f8fafc;border-radius:8px;font-size:13px}
+.hist-row .t{font-weight:700;flex:1;min-width:0;word-break:break-all}
+.hist-row .c{flex:0 0 auto;font-size:11px;color:var(--muted);background:#fff;padding:1px 6px;border-radius:5px}
+.hist-row .ts{flex:0 0 auto;font-size:10.5px;color:var(--muted)}
+
+.toast{position:fixed;left:50%;bottom:32px;transform:translateX(-50%) translateY(90px);background:rgba(15,23,42,.93);color:#fff;padding:11px 20px;border-radius:10px;font-size:13.5px;font-weight:600;z-index:99;opacity:0;transition:all .25s;pointer-events:none;max-width:88vw;text-align:center}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🎡 大转盘</h1>
+    <div class="sub" id="stat">加载中…</div>
+  </header>
+
+  <div class="chips" id="chips"></div>
+
+  <div class="wheel-box">
+    <div class="pointer"></div>
+    <canvas id="wheel"></canvas>
+    <button class="hub" id="hub">开始</button>
+  </div>
+
+  <div class="result" id="result"><div><div class="label">抽中结果</div><div class="val empty">点击中间按钮开始</div></div></div>
+
+  <div class="tools">
+    <button class="btn on" id="btnSound">🔊 音效开</button>
+    <button class="btn" id="btnSkip">🚫 排除已中</button>
+    <button class="btn" id="btnClear">🔄 清空已中</button>
+  </div>
+
+  <div class="card">
+    <h2>⚙️ 配置管理</h2>
+    <div class="hint">修改配置名/图标，或新建一套配置。<b>删除配置会连同关键词一起删除。</b></div>
+    <div class="cfg-edit">
+      <input class="inp emoji" id="cfgEmoji" maxlength="4" placeholder="🎯">
+      <input class="inp" id="cfgName" maxlength="20" placeholder="配置名，如：今天吃啥">
+      <button class="btn" id="btnSaveCfg">保存</button>
+    </div>
+    <div style="display:flex;gap:7px">
+      <input class="inp" id="newCfg" maxlength="20" placeholder="＋ 新建配置名">
+      <button class="btn" id="btnAddCfg">新建</button>
+      <button class="btn warn" id="btnDelCfg">删除本套</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📝 关键词 <span id="cnt" style="font-size:12px;color:var(--muted);font-weight:400"></span></h2>
+    <div class="hint">点文字可直接改 · ＋－ 调权重 · ✓ 标记已中 · ✕ 删除</div>
+    <div class="items" id="items"></div>
+    <div class="cfg-edit" style="margin-bottom:8px">
+      <input class="inp" id="newItem" maxlength="40" placeholder="＋ 添加关键词">
+      <button class="btn" id="btnAddItem">添加</button>
+    </div>
+    <input class="inp" id="bulkItem" placeholder="批量添加（换行 / 逗号分隔）" style="width:100%;margin-bottom:8px">
+    <button class="btn" id="btnBulk" style="width:100%">📥 批量导入</button>
+  </div>
+
+  <div class="card">
+    <h2>🕐 历史记录</h2>
+    <div class="hint" id="hStat"></div>
+    <div class="hist" id="hist"></div>
+    <button class="btn" id="btnClearHist" style="width:100%;margin-top:9px">🗑️ 清空历史</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+// 页面挂在 /wheel/ 下, Caddy handle_path 会剥掉 /wheel 前缀再转发给后端。
+// 前端请求必须带上前缀, 否则 /api/xxx 会打到域名根 -> 落到 Flask 404。
+// 这里从当前路径动态推导 BASE, 保证换端口/换挂载点也能用。
+const BASE = (function(){
+  const p = location.pathname;                  // 例如 /wheel/ 或 /wheel
+  const i = p.indexOf('/api');                  // 若将来直接从 api 进来
+  const dir = i > 0 ? p.slice(0, i) : p;
+  return dir.replace(/\/$/, '');                // 去掉结尾斜杠 -> "/wheel"
+})();
+const PALETTE = ['#ef4444','#f97316','#f59e0b','#eab308','#84cc16','#22c55e','#10b981','#14b8a6','#06b6d4','#0ea5e9','#3b82f6','#6366f1','#8b5cf6','#a855f7','#d946ef','#ec4899','#f43f5e','#fb7185','#fb923c','#a3e635'];
+
+let DATA = {configs:[],active_config_id:'',history:[]};
+let cfg = null, items = [];
+let angle = 0, spinning = false, lastIdx = -1;
+let soundOn = localStorage.getItem('wheel_sound') !== '0';
+let skipUsed = localStorage.getItem('wheel_skip') === '1';
+
+/* ══════════ 音效：WebAudio 实时合成，零文件 ══════════ */
+let AC = null;
+function ac(){
+  if(!AC){ const C = window.AudioContext||window.webkitAudioContext; if(C) AC = new C(); }
+  if(AC && AC.state === 'suspended') AC.resume();
+  return AC;
+}
+function tone(freq, dur, type='sine', vol=.22, delay=0){
+  const c = ac(); if(!c || !soundOn) return;
+  const t0 = c.currentTime + delay;
+  const o = c.createOscillator(), g = c.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t0);
+  g.gain.setValueAtTime(0, t0);
+  g.gain.linearRampToValueAtTime(vol, t0+.012);
+  g.gain.exponentialRampToValueAtTime(.0001, t0+dur);
+  o.connect(g); g.connect(c.destination);
+  o.start(t0); o.stop(t0+dur+.02);
+}
+function sfxTick(){ tone(1150 + Math.random()*160, .04, 'square', .055); }
+function sfxWin(){
+  [523.25,659.25,783.99,1046.5].forEach((f,i)=> tone(f,.32,'triangle',.2,i*.085));
+}
+function sfxFail(){ tone(300,.2,'sine',.12); tone(200,.28,'sine',.1,.09); }
+
+/* ══════════ Toast ══════════ */
+let toastT;
+function toast(msg){
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(()=> t.classList.remove('show'), 1900);
+}
+
+/* ══════════ API ══════════ */
+async function api(path, method='GET', body){
+  const opt = {method, headers:{'Content-Type':'application/json'}};
+  if(body) opt.body = JSON.stringify(body);
+  const r = await fetch(BASE + path, opt);   // 关键: 拼 BASE 前缀
+  if(!r.ok){
+    let d=''; try{ d = (await r.json()).detail || ''; }catch(e){}
+    throw new Error(d || ('HTTP '+r.status));
+  }
+  return r.json();
+}
+async function load(){
+  DATA = await api('/api/configs');
+  // active_config_id 可能指向已被删除的配置(多端同时编辑/手动改JSON), 回落到第一个
+  let found = DATA.configs.find(c=>c.id === DATA.active_config_id);
+  if(!found && DATA.configs.length){
+    found = DATA.configs[0];
+    // 顺手把服务端指回合法值, 避免下次又落到这里
+    api('/api/configs/active','POST',{config_id:found.id}).catch(()=>{});
+  }
+  cfg = found || null;
+  items = cfg ? (cfg.items||[]).slice() : [];
+  renderChips(); renderItems(); draw(); renderStat(); renderHistory();
+  if(cfg){ $('cfgName').value = cfg.name; $('cfgEmoji').value = cfg.emoji||''; }
+}
+
+/* ══════════ 绘制 ══════════ */
+const cv = $('wheel'), cx2 = cv.getContext('2d');
+let SZ = 400, DPR = 1;
+function sizeCanvas(){
+  const box = cv.parentElement.getBoundingClientRect();
+  DPR = Math.min(window.devicePixelRatio||1, 2.5);
+  SZ = Math.floor(box.width);
+  cv.width = SZ*DPR; cv.height = SZ*DPR;
+  cx2.setTransform(DPR,0,0,DPR,0,0);
+  draw();
+}
+const FONT = '"PingFang SC","Microsoft YaHei",sans-serif';
+
+function draw(){
+  const n = items.length;
+  cx2.clearRect(0,0,SZ,SZ);
+  const R = SZ/2 - 2, C = SZ/2;
+  cx2.save(); cx2.translate(C,C); cx2.rotate(angle);
+
+  if(n === 0){
+    cx2.beginPath(); cx2.arc(0,0,R,0,Math.PI*2);
+    cx2.fillStyle = '#e2e8f0'; cx2.fill();
+    cx2.strokeStyle='#cbd5e1'; cx2.lineWidth=3; cx2.stroke();
+    cx2.rotate(-angle); cx2.fillStyle='#94a3b8'; cx2.font='600 14px '+FONT;
+    cx2.textAlign='center'; cx2.fillText('先添加关键词', 0, 6);
+    cx2.restore(); return;
+  }
+
+  const step = Math.PI*2/n;
+  for(let i=0;i<n;i++){
+    const a0 = i*step, a1 = a0+step;
+    // 扇区
+    cx2.beginPath(); cx2.moveTo(0,0);
+    cx2.arc(0,0,R,a0,a1); cx2.closePath();
+    const base = PALETTE[i % PALETTE.length];
+    cx2.fillStyle = base; cx2.fill();
+    // 已中 -> 灰化
+    if(items[i].used){ cx2.fillStyle='rgba(148,163,184,.66)'; cx2.fill(); }
+    // 选中扇区加粗加亮边框
+    cx2.strokeStyle = (i===lastIdx) ? '#0f172a' : 'rgba(255,255,255,.85)';
+    cx2.lineWidth = (i===lastIdx) ? 7 : 2;
+    if(i===lastIdx){
+      cx2.shadowColor='#facc15'; cx2.shadowBlur=22;
+      cx2.fillStyle='rgba(250,204,21,.16)'; cx2.fill();
+      cx2.shadowBlur=0;
+    }
+    cx2.stroke();
+
+    // 文字（径向排布）
+    cx2.save(); cx2.rotate(a0+step/2);
+    cx2.textAlign='right'; cx2.textBaseline='middle';
+    const txt = items[i].text;
+    const maxLen = Math.max(4, Math.floor(R*0.42/(n>10?7:8)));
+    cx2.font='700 '+(n>14?12:n>10?13:15)+'px '+FONT;
+    cx2.fillStyle = (i===lastIdx) ? '#0f172a' : 'rgba(255,255,255,.97)';
+    cx2.shadowColor='rgba(0,0,0,.3)'; cx2.shadowBlur=3;
+    cx2.fillText(txt.length>maxLen ? txt.slice(0,maxLen)+'…' : txt, R-14, 0);
+    cx2.restore();
+  }
+  // 外圈
+  cx2.beginPath(); cx2.arc(0,0,R,0,Math.PI*2);
+  cx2.strokeStyle='#fff'; cx2.lineWidth=6; cx2.stroke();
+  cx2.strokeStyle='rgba(0,0,0,.14)'; cx2.lineWidth=1.5; cx2.stroke();
+  cx2.restore();
+}
+
+/* ══════════ 旋转动画 ══════════ */
+function pick(){
+  const pool = (skipUsed ? items.filter(it=>!it.used) : items);
+  const src = pool.length ? pool : items;
+  const weights = src.map(it => Math.max(1, it.weight||1));
+  const it = src[Math.floor(Math.random()*src.length)];
+  return items.findIndex(x=>x.id === it.id);
+}
+function spin(){
+  if(spinning) return;
+  if(!items.length){ toast('请先添加关键词'); return; }
+  ac(); // 解锁音频
+  const n = items.length;
+  const step = 2*Math.PI/n;          // 弧度
+  const idx = pick();
+  const durMs = 3000 + Math.random()*2000;      // 3~5 秒
+  const turns = 5 + Math.floor(Math.random()*3); // 5~7 圈
+
+  /* 角度约定 (canvas: y 轴朝下, rotate() 顺时针为正; 0 弧度 = 3 点方向)
+     ⚠ draw() 里扇区 i 画在 [i*step, (i+1)*step)，所以扇区中心是 i*step + step/2
+       (早期版本错写成 i*step，正好偏半扇区，导致针精确压在边界线上)
+     - 红针固定在正上方 = 3π/2
+     - 要让扇区 idx 的中心转到针下, 需满足: angle + (idx*step + step/2) ≡ 3π/2
+     => 目标角 = 3π/2 - idx*step - step/2, 再加 turns 圈保证顺时针多转 */
+  const full = 2*Math.PI;
+  const half = step/2;
+  const baseTarget = 1.5*Math.PI - idx*step - half;   // 瞄准扇区中心, 不压线
+  const start = angle;
+  // 顺时针至少转 turns 圈, 且终点 ≡ baseTarget (mod 2π)
+  const turnsR = turns*full;
+  let delta = (baseTarget - start) % full;
+  if(delta < 0) delta += full;                 // 取正余数, 保证只往前走
+  const end = start + turnsR + delta;
+
+  const t0 = performance.now();
+
+  spinning = true; $('hub').disabled = true; $('hub').textContent = '转…';
+  lastIdx = -1;
+  $('result').classList.remove('win');
+  $('result').innerHTML = '<div><div class="label">抽中结果</div><div class="val empty">转动中…</div></div>';
+
+  let tickAcc = 0, prev = 0;
+  function frame(now){
+    const p = Math.min(1, (now-t0)/durMs);
+    const e = 1 - Math.pow(1-p, 4);            // easeOutQuart
+    angle = start + (end-start)*e;
+    // 棘轮声
+    tickAcc += angle - prev; prev = angle;
+    if(tickAcc > 11){ tickAcc = 0; sfxTick(); }
+    draw();
+    if(p < 1) requestAnimationFrame(frame);
+    else finish(idx);
+  }
+  requestAnimationFrame(frame);
+}
+function finish(idx){
+  spinning = false; $('hub').disabled = false; $('hub').textContent = '开始';
+
+  /* 自校验: 按当前 angle 反算针下到底是哪个扇区。
+     扇区 i 占 [i*step, (i+1)*step)，中心 i*step + step/2，
+     所以针下扇区 = floor((针角度) / step)，与 draw() 的绘制区间一致。 */
+  const n = items.length;
+  if(n){
+    const step = 2*Math.PI/n;
+    let a = (1.5*Math.PI - angle) % (2*Math.PI);
+    if(a < 0) a += 2*Math.PI;
+    const under = Math.floor(a/step) % n;
+    if(under !== idx) idx = under;
+  }
+
+  lastIdx = idx; draw();
+  const it = items[idx];
+  $('result').classList.add('win');
+  $('result').innerHTML = '<div><div class="label">抽中结果</div><div class="val">'+esc(it.text)+'</div></div>';
+  sfxWin();
+  pushHistory(cfg.name, it.text);
+  // 自动标记已中
+  if(it.used !== true){
+    it.used = true;
+    api('/api/configs/'+cfg.id+'/items/'+it.id,'PATCH',{used:true}).catch(()=>{});
+    draw(); renderItems(); renderStat();
+  }
+}
+function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ══════════ 渲染：chips ══════════ */
+function renderChips(){
+  const box = $('chips');
+  box.innerHTML = DATA.configs.map(c=>
+    `<button class="chip ${cfg&&c.id===cfg.id?'active':''}" data-id="${c.id}">${esc(c.emoji||'🎯')} ${esc(c.name)}<span class="dot"></span></button>`
+  ).join('') + `<button class="chip add" id="chipAdd">＋ 新配置</button>`;
+  box.querySelectorAll('.chip[data-id]').forEach(b=>{
+    b.onclick = async ()=>{
+      if(spinning) return;
+      await api('/api/configs/active','POST',{config_id:b.dataset.id});
+      await load(); sizeCanvas();
+      toast('已切换到「'+cfg.name+'」');
+    };
+  });
+  const add = $('chipAdd');
+  if(add) add.onclick = ()=>{ $('newCfg').focus(); toast('在下方「配置管理」输入名字后点新建'); };
+}
+function renderStat(){
+  const total = DATA.configs.length;
+  const n = items.length;
+  const w = n ? items.reduce((s,i)=>s+(i.weight||1),0) : 0;
+  $('stat').textContent = `${total} 套配置 · 当前 ${cfg?cfg.name:'-'} (${n} 项)`;
+  $('cnt').textContent = n ? `共 ${n} 个 · 总权重 ${w}` : '';
+}
+
+/* ══════════ 渲染：关键词列表 ══════════ */
+function renderItems(){
+  const box = $('items');
+  if(!items.length){
+    box.innerHTML = '<div class="empty-tip">还没有关键词<br>用下方输入框添加，或批量导入</div>';
+    $('btnSkip').disabled = false; return;
+  }
+  box.innerHTML = items.map(it=>`
+    <div class="item ${it.used?'used':''}" data-id="${it.id}">
+      <div class="nm" contenteditable="true" spellcheck="false">${esc(it.text)}</div>
+      <div class="wt">
+        <button data-a="dec" aria-label="减权重">−</button>
+        <span>${it.weight||1}</span>
+        <button data-a="inc" aria-label="加权重">＋</button>
+      </div>
+      <button class="icon-btn done ${it.used?'on':''}" data-a="used" title="标记已中">✓</button>
+      <button class="icon-btn del" data-a="del" title="删除">✕</button>
+    </div>`).join('');
+
+  box.querySelectorAll('.item').forEach(row=>{
+    const id = row.dataset.id;
+    const nm = row.querySelector('.nm');
+    nm.onblur = async ()=>{
+      const v = nm.textContent.trim();
+      if(!v){ nm.textContent = items.find(i=>i.id===id).text; return; }
+      if(v === items.find(i=>i.id===id).text) return;
+      try{
+        await api(`/api/configs/${cfg.id}/items/${id}`,'PATCH',{text:v});
+        items.find(i=>i.id===id).text = v; draw(); toast('已修改');
+      }catch(e){ toast('✕ '+e.message); nm.textContent = items.find(i=>i.id===id).text; }
+    };
+    nm.onkeydown = e=>{ if(e.key==='Enter'){ e.preventDefault(); nm.blur(); } };
+    row.querySelectorAll('[data-a]').forEach(btn=>{
+      btn.onclick = async ()=>{
+        const it = items.find(i=>i.id===id); if(!it) return;
+        const a = btn.dataset.a;
+        if(a==='del'){
+          if(!confirm('删除「'+it.text+'」？')) return;
+          try{ await api(`/api/configs/${cfg.id}/items/${id}`,'DELETE'); items = items.filter(i=>i.id!==id); draw(); renderItems(); renderStat(); toast('已删除'); }
+          catch(e){ toast('✕ '+e.message); }
+        }else if(a==='inc'||a==='dec'){
+          const w = Math.max(1, Math.min(20, (it.weight||1) + (a==='inc'?1:-1)));
+          try{ await api(`/api/configs/${cfg.id}/items/${id}`,'PATCH',{weight:w}); it.weight=w; renderItems(); draw(); renderStat(); }
+          catch(e){ toast('✕ '+e.message); }
+        }else if(a==='used'){
+          const u = !it.used;
+          try{ await api(`/api/configs/${cfg.id}/items/${id}`,'PATCH',{used:u}); it.used=u; renderItems(); draw(); renderStat(); }
+          catch(e){ toast('✕ '+e.message); }
+        }
+      };
+    });
+  });
+}
+
+/* ══════════ 渲染：历史（sessionStorage，只在当前会话保留，关掉网页自动清空） ══════════ */
+const HIST_KEY = 'wheel_hist';
+function getHist(){
+  try{ const v = JSON.parse(sessionStorage.getItem(HIST_KEY)||'[]'); return Array.isArray(v)?v:[]; }
+  catch(e){ return []; }
+}
+function pushHistory(configName, text){
+  const h = getHist();
+  h.unshift({config_name:String(configName||'').slice(0,20), text:String(text||'').slice(0,40), ts:Date.now()});
+  try{ sessionStorage.setItem(HIST_KEY, JSON.stringify(h.slice(0,20))); }catch(e){}
+  renderHistory();
+}
+function renderHistory(){
+  const h = getHist();
+  $('hStat').textContent = h.length ? '当前会话 ' + h.length + ' 次（关页即清空）' : '当前会话，关闭网页即清空';
+  $('hist').innerHTML = h.length ? h.map(x=>{
+    const d = new Date(x.ts);
+    const t = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    return `<div class="hist-row"><span class="c">${esc(x.config_name)}</span><span class="t">${esc(x.text)}</span><span class="ts">${t}</span></div>`;
+  }).join('') : '<div class="empty-tip">本次还没有记录</div>';
+}
+function clearHistory(){
+  try{ sessionStorage.removeItem(HIST_KEY); }catch(e){}
+  renderHistory();
+}
+
+/* ══════════ 事件绑定 ══════════ */
+$('hub').onclick = spin;
+
+$('btnSound').onclick = ()=>{
+  soundOn = !soundOn;
+  localStorage.setItem('wheel_sound', soundOn?'1':'0');
+  $('btnSound').textContent = soundOn ? '🔊 音效开' : '🔇 音效关';
+  $('btnSound').classList.toggle('on', soundOn);
+  if(soundOn){ ac(); tone(880,.12,'sine',.18); }
+};
+$('btnSound').textContent = soundOn ? '🔊 音效开' : '🔇 音效关';
+$('btnSound').classList.toggle('on', soundOn);
+
+$('btnSkip').onclick = ()=>{
+  skipUsed = !skipUsed;
+  localStorage.setItem('wheel_skip', skipUsed?'1':'0');
+  $('btnSkip').classList.toggle('on', skipUsed);
+  $('btnSkip').textContent = skipUsed ? '🚫 排除已中' : '✅ 含已中';
+  toast(skipUsed ? '已中项不再被抽到' : '已中项也能抽到');
+};
+$('btnSkip').classList.toggle('on', skipUsed);
+$('btnSkip').textContent = skipUsed ? '🚫 排除已中' : '✅ 含已中';
+
+$('btnClear').onclick = async ()=>{
+  if(!cfg) return;
+  try{ await api(`/api/configs/${cfg.id}/items/clear_used`,'POST'); items.forEach(i=>i.used=false); draw(); renderItems(); toast('已清空"已中"标记'); }
+  catch(e){ toast('✕ '+e.message); }
+};
+
+$('btnAddItem').onclick = async ()=>{
+  const inp = $('newItem'), v = inp.value.trim();
+  if(!cfg) return toast('请先创建配置');
+  if(!v) return toast('请输入关键词');
+  try{
+    const it = await api(`/api/configs/${cfg.id}/items`,'POST',{text:v});
+    items.push(it); inp.value=''; draw(); renderItems(); renderStat(); toast('已添加「'+v+'」');
+  }catch(e){ toast('✕ '+e.message); }
+};
+$('newItem').addEventListener('keydown', e=>{ if(e.key==='Enter') $('btnAddItem').click(); });
+
+$('btnBulk').onclick = async ()=>{
+  const v = $('bulkItem').value.trim();
+  if(!cfg) return toast('请先创建配置');
+  if(!v) return toast('请输入要导入的内容');
+  try{
+    const r = await api(`/api/configs/${cfg.id}/items/bulk`,'POST',{text:v, separator:'newline'});
+    await load(); sizeCanvas();
+    const msg = `导入 ${r.added.length} 个` + (r.skipped.length ? ` · 跳过 ${r.skipped.length} 个(重复/过长)` : '');
+    $('bulkItem').value=''; toast(msg);
+  }catch(e){ toast('✕ '+e.message); }
+};
+
+$('btnSaveCfg').onclick = async ()=>{
+  if(!cfg) return;
+  const name = $('cfgName').value.trim(), emoji = $('cfgEmoji').value.trim()||'🎯';
+  if(!name) return toast('配置名不能为空');
+  try{
+    await api('/api/configs/'+cfg.id,'PATCH',{name, emoji});
+    await load(); sizeCanvas(); toast('已保存');
+  }catch(e){ toast('✕ '+e.message); }
+};
+
+$('btnAddCfg').onclick = async ()=>{
+  const v = $('newCfg').value.trim();
+  if(!v) return toast('请输入配置名');
+  try{
+    const c = await api('/api/configs','POST',{name:v, emoji:'🎯'});
+    $('newCfg').value='';
+    await api('/api/configs/active','POST',{config_id:c.id});
+    await load(); sizeCanvas(); toast('已创建「'+c.name+'」');
+  }catch(e){ toast('✕ '+e.message); }
+};
+$('newCfg').addEventListener('keydown', e=>{ if(e.key==='Enter') $('btnAddCfg').click(); });
+
+$('btnDelCfg').onclick = async ()=>{
+  if(!cfg) return;
+  if(DATA.configs.length<=1) return toast('至少保留一套配置');
+  if(!confirm(`删除配置「${cfg.name}」及其 ${items.length} 个关键词？不可恢复`)) return;
+  try{
+    await api('/api/configs/'+cfg.id,'DELETE');
+    await load(); sizeCanvas(); toast('已删除');
+  }catch(e){ toast('✕ '+e.message); }
+};
+
+$('btnClearHist').onclick = ()=>{
+  if(!confirm('清空本次会话的历史记录？')) return;
+  clearHistory(); toast('已清空');
+};
+
+window.addEventListener('resize', sizeCanvas);
+window.addEventListener('orientationchange', ()=> setTimeout(sizeCanvas,200));
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden && AC) AC.suspend(); });
+
+load().then(sizeCanvas).catch(e=>{
+  console.error('[wheel] 初始化失败', e);
+  $('stat').textContent = '加载失败：' + e.message;
+  toast('加载失败：' + e.message);
+});
+</script>
+</body>
+</html>
